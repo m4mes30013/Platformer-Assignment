@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
+
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -16,6 +18,12 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float smoothTime = 0.1f;
 
     private bool jumpButtonReleased = true;
+
+    public Tilemap tilemap;
+    float finalPos;
+    bool isAscend;
+    public Rigidbody2D _rb;
+
 
     private void Awake() 
     {
@@ -64,7 +72,61 @@ public class PlayerMovement : MonoBehaviour
         }
 
         _anim.SetBool("isRun", Input.GetAxisRaw("Horizontal") != 0);
+
+
+                if (isAscend)
+        {
+            if (transform.position.y > finalPos)
+            {
+                isAscend = false;
+                return;
+            }
+
+            _rb.velocity = new Vector2(_rb.velocity.x, 4);
+            GetComponent<BoxCollider2D>().enabled = false;
+        }
+        else
+        {
+            GetComponent<BoxCollider2D>().enabled = true;
+        }
+
+        RaycastHit2D[] hit = Physics2D.RaycastAll(transform.position, Vector2.up, 5);
+        Debug.DrawLine(transform.position, (Vector2)transform.position + Vector2.up * 5, Color.red);
+
+        foreach (RaycastHit2D h in hit)
+        {
+            if (h.collider.gameObject.tag == "platform")
+            {
+                if (Input.GetKeyDown(KeyCode.J))
+                {
+                    isAscend = true;
+                    finalPos = h.collider.transform.position.y + 2.5f;
+
+                }
+
+                foreach (var position in tilemap.cellBounds.allPositionsWithin)
+                {
+                    if (!tilemap.HasTile(position))
+                    {
+                        continue;
+                    }
+
+                    if (Input.GetKeyDown(KeyCode.J))
+                    {
+                        isAscend = true;
+                        finalPos = position.y + 2.5f;
+
+                    }
+                    Debug.Log(finalPos);
+                }
+            }
+        }
     }
+
+    
+
+    
+
 
     void OnCollisionEnter2D(Collision2D col) 
     {
@@ -82,4 +144,8 @@ public class PlayerMovement : MonoBehaviour
             col.gameObject.GetComponent<Animator>().SetBool("is open",true);
         }    
     }
+
+
 }
+
+    

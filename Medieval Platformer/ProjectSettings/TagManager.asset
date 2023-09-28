@@ -6,6 +6,7 @@ TagManager:
   tags:
   - AudioSceneSwapping
   - Ground
+  - platform
   layers:
   - Default
   - TransparentFX
