@@ -7,6 +7,7 @@ TagManager:
   - AudioSceneSwapping
   - Ground
   - platform
+  - Stop Ascend
   layers:
   - Default
   - TransparentFX
@@ -14,7 +15,7 @@ TagManager:
   - Can Pass Through
   - Water
   - UI
-  - 
+  - Enemies
   - 
   - 
   - 

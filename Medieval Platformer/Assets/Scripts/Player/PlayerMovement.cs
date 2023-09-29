@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -35,6 +36,13 @@ public class PlayerMovement : MonoBehaviour
     public Tilemap tilemap;
     float finalPos;
 
+    //attack
+    public float speed;
+    private Animator anim;
+    private float move;
+    private Rigidbody2D rb;
+
+
     void Start()
     {
         direction = 1;
@@ -52,7 +60,7 @@ public class PlayerMovement : MonoBehaviour
 
 
     }
-
+    
     public void DeductHP(int deductedHP)
     {
         if (currentHP <= 0)
@@ -76,7 +84,6 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-
         if (isAscend)
         {
             if (transform.position.y > finalPos)
@@ -93,7 +100,7 @@ public class PlayerMovement : MonoBehaviour
             GetComponent<BoxCollider2D>().enabled = true;
         }
 
-        if (Input.GetKeyDown(KeyCode.J))
+        if (Input.GetKeyDown(KeyCode.C))
         {
             RaycastHit2D[] hit = Physics2D.RaycastAll(transform.position, Vector2.up, 5);
             Debug.DrawLine(transform.position, (Vector2)transform.position + Vector2.up * 5, Color.red);
@@ -103,7 +110,7 @@ public class PlayerMovement : MonoBehaviour
                 if (h.collider.gameObject.tag == "platform")
                 {
                     isAscend = true;
-                    finalPos = h.collider.transform.position.y + 2.5f;
+                    finalPos = h.collider.transform.position.y + 0.5f;
 
                     foreach (var position in tilemap.cellBounds.allPositionsWithin)
                     {
@@ -113,11 +120,17 @@ public class PlayerMovement : MonoBehaviour
                         }
 
                         isAscend = true;
-                        finalPos = position.y + 2.5f;
+                        finalPos = position.y + 0.5f;
                     }
+                }
+                else if (h.collider.gameObject.tag == "Stop Ascend")
+                {
+                    isAscend = false;
                 }
             }
         }
+    
+    
 
 
         if (!isChat && !isDie)
@@ -151,13 +164,13 @@ public class PlayerMovement : MonoBehaviour
 
             transform.localScale = myScale;
 
-            if (Input.GetKeyDown(KeyCode.W) && isJumping == false)
+            if (Input.GetKeyDown(KeyCode.Z) && isJumping == false)
             {
                 isJumping = true;
                 _rb.velocity = new Vector2
                 (_rb.velocity.x, jumpSpeed);
 
-                _anim.SetBool("isJump", true);
+                _anim.SetBool("isJumping", true);
 
             }
 
@@ -185,7 +198,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (col.gameObject.tag == "platform")
         {
-            _anim.SetBool("isJump", false);
+            _anim.SetBool("isJumping", false);
             isJumping = false;
         }
 
@@ -215,7 +228,7 @@ public class PlayerMovement : MonoBehaviour
             col.gameObject.GetComponent<Animator>().SetBool("isOpen", false);
         }
     }
-
+    
 
 
 }
