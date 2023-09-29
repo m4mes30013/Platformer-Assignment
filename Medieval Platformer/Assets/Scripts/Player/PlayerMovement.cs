@@ -1,80 +1,83 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float speed;
-    private Rigidbody2D body;
+    public Rigidbody2D _rb;
     public int moveSpeed;
+
     public int jumpSpeed;
     public Animator _anim;
+
     Vector2 myScale;
     float myScaleX;
     bool isJumping;
+
     public GameObject target;
 
-    private Vector3 currentVelocity = Vector3.zero;
-    [SerializeField] private float smoothTime = 0.1f;
+    public bool isChat;
+    bool isDie;
 
-    private bool jumpButtonReleased = true;
+    public float fullhp;
+    float currentHP;
+    public GameObject HPBar;
+
+    public GameObject HeartParent;
+    public GameObject heart;
+
+    public GameObject bullet;
+
+    public float shootDelay;
+    float shootTime;
+    int direction;
+    bool isAscend;
 
     public Tilemap tilemap;
     float finalPos;
-    bool isAscend;
-    public Rigidbody2D _rb;
 
-
-    private void Awake() 
+    void Start()
     {
-        body = GetComponent<Rigidbody2D>();    
+        direction = 1;
+
         myScale = transform.localScale;
         myScaleX = myScale.x;
+        //--------------//
+        currentHP = fullhp;
+        //--------------//
+
+        for (int i = 0; i < fullhp; i++)
+        {
+            Instantiate(heart, HeartParent.transform, false);
+        }
+
+
     }
 
-    private void Update()
+    public void DeductHP(int deductedHP)
     {
-        if(Input.GetKeyDown(KeyCode.F))
+        if (currentHP <= 0)
         {
-            if(target !=null && target.GetComponent<Item>()){
-                target.GetComponent<Item>().ASD();
-            }  
-        }
-        
-        float horizontalInput = Input.GetAxisRaw("Horizontal");
-        Vector3 targetVelocity = new Vector3(horizontalInput * speed, body.velocity.y);
-        body.velocity = Vector3.SmoothDamp(body.velocity, targetVelocity, ref currentVelocity, smoothTime);
-
-        //flip player while moving left-right
-        if (Input.GetAxisRaw("Horizontal") < 0)
-            {
-                myScale.x = -myScaleX;
-            }
-        else if (Input.GetAxisRaw("Horizontal") > 0)
-            {
-                myScale.x = myScaleX;  
-            }
-
-            transform.localScale = myScale;
-
-        if(Input.GetKey(KeyCode.Space) && isJumping == false && jumpButtonReleased)
-            {
-            isJumping = true;
-            jumpButtonReleased = false;
-            body.velocity = new Vector2(body.velocity.x, speed);
-            _anim.SetBool("isJump", true);
-            _anim.SetTrigger("isJumpTrigger");
-            }
-
-        if(!Input.GetKey(KeyCode.Space))
-        {
-            jumpButtonReleased = true;
+            currentHP = 0;
+            isDie = true;
+            return;
         }
 
-        _anim.SetBool("isRun", Input.GetAxisRaw("Horizontal") != 0);
+        currentHP -= deductedHP;
 
+        // health bar
+        HPBar.transform.localScale = new Vector2(currentHP / fullhp, 1);
 
-                if (isAscend)
+        // heart
+        for (int i = 0; i < deductedHP; i++)
+        {
+            HeartParent.transform.GetChild((int)currentHP + i).gameObject.SetActive(false);
+        }
+    }
+
+    void Update()
+    {
+
+        if (isAscend)
         {
             if (transform.position.y > finalPos)
             {
@@ -90,62 +93,129 @@ public class PlayerMovement : MonoBehaviour
             GetComponent<BoxCollider2D>().enabled = true;
         }
 
-        RaycastHit2D[] hit = Physics2D.RaycastAll(transform.position, Vector2.up, 5);
-        Debug.DrawLine(transform.position, (Vector2)transform.position + Vector2.up * 5, Color.red);
-
-        foreach (RaycastHit2D h in hit)
+        if (Input.GetKeyDown(KeyCode.J))
         {
-            if (h.collider.gameObject.tag == "platform")
+            RaycastHit2D[] hit = Physics2D.RaycastAll(transform.position, Vector2.up, 5);
+            Debug.DrawLine(transform.position, (Vector2)transform.position + Vector2.up * 5, Color.red);
+
+            foreach (RaycastHit2D h in hit)
             {
-                if (Input.GetKeyDown(KeyCode.J))
+                if (h.collider.gameObject.tag == "platform")
                 {
                     isAscend = true;
                     finalPos = h.collider.transform.position.y + 2.5f;
 
-                }
-
-                foreach (var position in tilemap.cellBounds.allPositionsWithin)
-                {
-                    if (!tilemap.HasTile(position))
+                    foreach (var position in tilemap.cellBounds.allPositionsWithin)
                     {
-                        continue;
-                    }
+                        if (!tilemap.HasTile(position))
+                        {
+                            continue;
+                        }
 
-                    if (Input.GetKeyDown(KeyCode.J))
-                    {
                         isAscend = true;
                         finalPos = position.y + 2.5f;
-
                     }
-                    Debug.Log(finalPos);
                 }
+            }
+        }
+
+
+        if (!isChat && !isDie)
+        {
+            //shoot
+            shootTime += Time.deltaTime;
+            if (Input.GetKeyDown(KeyCode.Return))
+            {
+                if (shootTime >= shootDelay)
+                {
+                    GameObject newBullet = Instantiate(bullet, transform.position, Quaternion.identity);
+                    newBullet.GetComponent<Bullet>().direction = direction;
+                    shootTime = 0;
+                }
+            }
+
+            _rb.velocity = new Vector2
+               (Input.GetAxisRaw("Horizontal") * moveSpeed,
+               _rb.velocity.y);
+
+            if (Input.GetAxisRaw("Horizontal") < 0)
+            {
+                myScale.x = -myScaleX;
+                direction = -1;
+            }
+            else if (Input.GetAxisRaw("Horizontal") > 0)
+            {
+                myScale.x = myScaleX;
+                direction = 1;
+            }
+
+            transform.localScale = myScale;
+
+            if (Input.GetKeyDown(KeyCode.W) && isJumping == false)
+            {
+                isJumping = true;
+                _rb.velocity = new Vector2
+                (_rb.velocity.x, jumpSpeed);
+
+                _anim.SetBool("isJump", true);
+
+            }
+
+            if (Input.GetAxisRaw("Horizontal") != 0)
+            {
+                _anim.SetBool("isRun", true);
+            }
+            else
+            {
+                _anim.SetBool("isRun", false);
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (target != null && target.GetComponent<item>())
+            {
+                target.GetComponent<item>().DoSomething();
             }
         }
     }
 
-    
-
-    
-
-
-    void OnCollisionEnter2D(Collision2D col) 
+    void OnCollisionEnter2D(Collision2D col)
     {
-        if (col.gameObject.tag == "Ground")
+
+        if (col.gameObject.tag == "platform")
         {
             _anim.SetBool("isJump", false);
             isJumping = false;
         }
+
+        if (col.gameObject.name == "enemy")
+        {
+            DeductHP(2);
+        }
     }
 
-    private void OnTriggerEnter2D(Collider2D col) 
+    void OnCollisionExit2D(Collision2D col)
     {
-        if (col.gameObject.name == "Item")
-        {
-            col.gameObject.GetComponent<Animator>().SetBool("is open",true);
-        }    
+
     }
+
+    // void OnTriggerEnter2D(Collider2D col)
+    // {
+    //     if (col.gameObject.name == "box")
+    //     {
+    //         col.gameObject.GetComponent<Animator>().SetBool("isOpen", true);
+    //     }
+    // }
+
+    void OnTriggerExit2D(Collider2D col)
+    {
+        if (col.gameObject.name == "box")
+        {
+            col.gameObject.GetComponent<Animator>().SetBool("isOpen", false);
+        }
+    }
+
 
 
 }
-
-    

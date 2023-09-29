@@ -26,14 +26,14 @@ public class item : MonoBehaviour
         {
             DialogBox.SetActive(false);
             count = 0;
-            player.GetComponent<character>().isChat = false;
+            player.GetComponent<PlayerMovement>().isChat = false;
             return;
         }
 
         DialogBox.SetActive(true);
         DialogBox.GetComponentInChildren<TMP_Text>().text = dialog[count];
         count++;
-        player.GetComponent<character>().isChat = true;
+        player.GetComponent<PlayerMovement>().isChat = true;
     }
 
     void OnTriggerEnter2D(Collider2D col)
@@ -42,7 +42,7 @@ public class item : MonoBehaviour
         {
             player = col.gameObject;
             pressF.SetActive(true);
-            col.gameObject.GetComponent<character>().target = gameObject;
+            col.gameObject.GetComponent<PlayerMovement>().target = gameObject;
         }
     }
 
@@ -52,7 +52,7 @@ public class item : MonoBehaviour
         {
             player = null;
             pressF.SetActive(false);
-            col.gameObject.GetComponent<character>().target = null;
+            col.gameObject.GetComponent<PlayerMovement>().target = null;
         }
     }
 
